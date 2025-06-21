@@ -1,0 +1,8 @@
+[tasks.lint]
+args    = ["clippy", "--", "-Dwarnings"]
+command = "cargo"
+
+[tasks.fmt]
+args      = ["fmt"]
+command   = "cargo"
+toolchain = "nightly"

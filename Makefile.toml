@@ -1,0 +1,4 @@
+extend = [{ path = "make/lint.toml" }]
+
+[config]
+default_to_workspace = false
