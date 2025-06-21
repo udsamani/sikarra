@@ -1,0 +1,11 @@
+[package]
+name              = "sikkara-core"
+version.workspace = true
+edition.workspace = true
+
+[dependencies]
+async-trait.workspace  = true
+futures.workspace      = true
+tokio.workspace        = true
+futures-util.workspace = true
+thiserror.workspace    = true
