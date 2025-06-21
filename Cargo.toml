@@ -1,0 +1,48 @@
+[workspace]
+members  = ["crates/*"]
+resolver = "2"
+
+
+[workspace.package]
+edition = "2021"
+version = "0.1.0"
+
+[workspace.dependencies]
+# Asynchronous Dependencies
+async-stream       = { version = "0.3.6" }
+async-trait        = { version = "0.1.88" }
+eventsource-stream = { version = "0.2" }
+futures            = { version = "0.3.31" }
+futures-util       = { version = "0.3.31" }
+reqwest            = { version = "0.12.19", default-features = false, features = ["json", "stream"] }
+tokio              = { version = "1.45.1", features = ["full"] }
+tokio-metrics      = { version = "0.4.2", features = ["metrics-rs-integration"] }
+tokio-rustls       = { version = "0.26.2" }
+tokio-stream       = { version = "0.1.17" }
+tokio-util         = { version = "0.7.15" }
+
+# Miscellaneous External Dependencies
+anyhow         = { version = "1.0.98" }
+arbitrary      = { version = "1.0", features = ["derive"] }
+bs58           = { version = "0.5.1" }
+dec            = { version = "0.4.9", features = ["num-traits"] }
+derive_more    = { version = "2.0.1" }
+derive-getters = { version = "0.5.0" }
+hex            = { version = "0.4.3", features = ["serde"] }
+jiff           = { version = "0.2.8" }
+serde          = { version = "1.0.219" }
+serde_json     = { version = "1.0.140" }
+strum          = { version = "0.27.1", features = ["derive"] }
+thiserror      = { version = "1.0.31" }
+
+
+# Telemetry Dependencies
+metrics                     = { version = "0.24.2" }
+metrics-exporter-prometheus = { version = "0.17.0" }
+tracing                     = { version = "0.1.41" }
+tracing-subscriber          = { version = "0.3.19" }
+
+
+# Blockchain Dependencies# Blockchain Dependencies
+alloy        = { version = "1.0.9", features = ["contract", "full", "transports"] }
+alloy-chains = { version = "0.2.4" }
