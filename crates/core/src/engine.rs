@@ -22,7 +22,7 @@ pub trait Engine<Event, Action>: Send + Sync {
     /// Engine proccesses an event according to the logic defined in the engine.
     /// It returns a vector of actions, which would ideally be executed by
     /// the application.
-    async fn process_event(&mut self, event: Event) -> AppResult<Action>;
+    async fn process_event(&mut self, event: Event) -> AppResult<Option<Action>>;
 }
 
 /// A specialzed stream type for event collectors in the application.
@@ -78,6 +78,23 @@ pub struct EngineRunner<Event, Action> {
 }
 
 impl<Event, Action> EngineRunner<Event, Action> {
+    /// Create a new instance of the EngineRunner with the specified name and
+    /// channel capacities.
+    pub fn new(
+        name: String,
+        event_channel_capacity: usize,
+        action_channel_capacity: usize,
+    ) -> Self {
+        Self {
+            name,
+            collectors: Vec::new(),
+            engine: Vec::new(),
+            executors: Vec::new(),
+            event_channel_capacity,
+            action_channel_capacity,
+        }
+    }
+
     /// Add an event collector to the engine runner.
     pub fn add_collector(&mut self, collector: Box<dyn Collector<Event>>) {
         self.collectors.push(collector);
@@ -159,12 +176,10 @@ where
                     tokio::select! {
                         event = event_receiver.recv() => match event {
                             Ok(event) => {
-                                if let Ok(actions) = engine.process_event(event).await {
+                                if let Ok(Some(actions)) = engine.process_event(event).await {
                                     if let Err(e) = action_sender.send(actions) {
                                         error!("engine {} failed to send actions: {}", engine.id(), e);
                                     }
-                                } else {
-                                    warn!("engine {} failed to process event", engine.id());
                                 }
                             },
                             Err(RecvError::Closed) => {

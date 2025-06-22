@@ -24,7 +24,7 @@ tokio              = { version = "1.45.1", features = ["full"] }
 tokio-metrics      = { version = "0.4.2", features = ["metrics-rs-integration"] }
 tokio-rustls       = { version = "0.26.2" }
 tokio-tungstenite  = { version = "0.26.1", features = ["native-tls"] }
-tokio-stream       = { version = "0.1.17" }
+tokio-stream       = { version = "0.1.17", features = ["sync"] }
 tokio-util         = { version = "0.7.15" }
 
 # Miscellaneous External Dependencies
@@ -47,7 +47,7 @@ thiserror           = { version = "1.0.31" }
 metrics                     = { version = "0.24.2" }
 metrics-exporter-prometheus = { version = "0.17.0" }
 tracing                     = { version = "0.1.41" }
-tracing-subscriber          = { version = "0.3.19" }
+tracing-subscriber          = { version = "0.3.19", features = ["env-filter", "json"] }
 
 
 # Blockchain Dependencies# Blockchain Dependencies

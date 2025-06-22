@@ -2,3 +2,4 @@
 
 #[allow(unused)]
 mod coinbase;
+pub use coinbase::*;
