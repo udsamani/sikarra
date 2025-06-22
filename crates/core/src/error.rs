@@ -1,5 +1,5 @@
 /// A type alias for a result type used throughout the application.
-pub type AppResult<T> = Result<T, AppError>;
+pub type AppResult<T> = anyhow::Result<T>;
 
 /// An enumeration representing various errors that can occur in the
 /// application.
