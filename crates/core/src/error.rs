@@ -8,4 +8,7 @@ pub enum AppError {
     /// An error that occurs when a piece of code is not implemented
     #[error("Not immplemented: {0}")]
     NotImplemented(String),
+
+    #[error("WebSocket error: {0}")]
+    WebSocketError(String),
 }
