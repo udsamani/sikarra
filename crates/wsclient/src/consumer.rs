@@ -5,7 +5,7 @@ use tokio_tungstenite::{connect_async, tungstenite::Message, WebSocketStream};
 use tokio_util::sync::CancellationToken;
 use tracing::{error, info};
 
-use crate::callback::WsCallback;
+use crate::{callback::WsCallback, consumer};
 
 pub struct WsConsumer<C>
 where
@@ -20,7 +20,7 @@ where
 
 impl<C> WsConsumer<C>
 where
-    C: WsCallback + Clone,
+    C: WsCallback + Clone + Send + 'static,
 {
     pub async fn run(&mut self, shutdown: CancellationToken) -> AppResult<()> {
         loop {
@@ -119,6 +119,7 @@ where
                     // Handle the incoming message from the receiver aka sending a request to the websocket
                     match result {
                         Some(message) => {
+                            info!("sending message to websocket: {:?}", message);
                             if let Err(e) = ws_stream.send(message).await {
                                 return Err(AppError::WebSocketError(format!("failed to send message: {}", e)).into());
                             }
@@ -140,7 +141,10 @@ where
                 }
             }
         }
+    }
 
-        todo!()
+    pub fn spawn(self, shutdown: CancellationToken) -> tokio::task::JoinHandle<AppResult<()>> {
+        let mut consumer = self;
+        tokio::spawn(async move { consumer.run(shutdown).await })
     }
 }

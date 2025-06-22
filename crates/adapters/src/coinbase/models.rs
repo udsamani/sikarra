@@ -5,7 +5,7 @@ use serde::{Deserialize, Serialize};
 pub struct CoinbaseRequest {
     #[serde(rename = "type")]
     pub request_type: CoinbaseRequestType,
-    pub product_ids: Vec<String>,
+    pub product_ids: Vec<CoinbaseSymbol>,
     pub channels: Vec<String>,
 }
 
@@ -34,7 +34,7 @@ pub enum CoinbaseChannelMessage {
 #[derive(Debug, Clone, Deserialize)]
 pub struct CoinbaseTickerMessage {
     pub sequence: u64,
-    pub product_id: String,
+    pub product_id: CoinbaseSymbol,
     pub price: Decimal,
     pub open_24h: Decimal,
     pub volume_24h: Decimal,
@@ -85,6 +85,53 @@ pub enum Side {
     Sell,
 }
 
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum CoinbaseSymbol {
+    EthUsd,
+    BtcUsd,
+    EthUsdt,
+    BtcUsdt,
+}
+
+impl std::fmt::Display for CoinbaseSymbol {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            CoinbaseSymbol::EthUsd => write!(f, "ETH-USD"),
+            CoinbaseSymbol::BtcUsd => write!(f, "BTC-USD"),
+            CoinbaseSymbol::EthUsdt => write!(f, "ETH-USDT"),
+            CoinbaseSymbol::BtcUsdt => write!(f, "BTC-USDT"),
+        }
+    }
+}
+
+impl Serialize for CoinbaseSymbol {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: serde::Serializer,
+    {
+        serializer.serialize_str(&self.to_string())
+    }
+}
+
+impl<'de> Deserialize<'de> for CoinbaseSymbol {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: serde::Deserializer<'de>,
+    {
+        let s = String::deserialize(deserializer)?;
+        match s.as_str() {
+            "ETH-USD" => Ok(CoinbaseSymbol::EthUsd),
+            "BTC-USD" => Ok(CoinbaseSymbol::BtcUsd),
+            "ETH-USDT" => Ok(CoinbaseSymbol::EthUsdt),
+            "BTC-USDT" => Ok(CoinbaseSymbol::BtcUsdt),
+            _ => Err(serde::de::Error::unknown_variant(
+                &s,
+                &["ETH-USD", "BTC-USD", "ETH-USDT", "BTC-USDT"],
+            )),
+        }
+    }
+}
+
 #[cfg(test)]
 mod tests {
 
@@ -96,7 +143,7 @@ mod tests {
     fn test_coinbase_subscribe_request_serialize() {
         let request = CoinbaseRequest {
             request_type: CoinbaseRequestType::Subscribe,
-            product_ids: vec!["BTC-USD".to_string()],
+            product_ids: vec![CoinbaseSymbol::BtcUsd],
             channels: vec!["tickers".to_string()],
         };
 
@@ -121,7 +168,7 @@ mod tests {
 
         let request: CoinbaseRequest = serde_json::from_value(json).unwrap();
         assert!(matches!(request.request_type, CoinbaseRequestType::Subscribe));
-        assert_eq!(request.product_ids, vec!["BTC-USD"]);
+        assert_eq!(request.product_ids, vec![CoinbaseSymbol::BtcUsd]);
         assert_eq!(request.channels, vec!["tickers"]);
     }
 
@@ -150,7 +197,7 @@ mod tests {
         let message: CoinbaseChannelMessage = serde_json::from_value(json.clone()).unwrap();
         match message {
             CoinbaseChannelMessage::Ticker(ticker) => {
-                assert_eq!(ticker.product_id, "ETH-USD");
+                assert_eq!(ticker.product_id, CoinbaseSymbol::EthUsd);
                 assert_eq!(ticker.price, dec!(2687.37));
                 assert_eq!(ticker.time.to_string(), "2025-02-12T21:12:33.778451Z");
                 assert_eq!(ticker.trade_id, 609139973_u64);
@@ -172,7 +219,7 @@ mod tests {
         let message: CoinbaseMessage = serde_json::from_value(json).unwrap();
         match message {
             CoinbaseMessage::ChannelMessage(CoinbaseChannelMessage::Ticker(ticker)) => {
-                assert_eq!(ticker.product_id, "ETH-USD");
+                assert_eq!(ticker.product_id, CoinbaseSymbol::EthUsd);
                 assert_eq!(ticker.price, dec!(2687.37));
                 assert_eq!(ticker.time.to_string(), "2025-02-12T21:12:33.778451Z");
                 assert_eq!(ticker.trade_id, 609139973_u64);

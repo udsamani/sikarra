@@ -4,7 +4,9 @@ use tokio::sync::{broadcast, mpsc};
 use tokio_tungstenite::tungstenite::{Message, Utf8Bytes};
 use tracing::{debug, error, info, warn};
 
-use crate::coinbase::{CoinbaseMessage, CoinbaseRequest, CoinbaseRequestType};
+use crate::coinbase::{
+    models::CoinbaseSymbol, CoinbaseMessage, CoinbaseRequest, CoinbaseRequestType,
+};
 
 #[derive(Debug, Clone)]
 pub struct CoinbaseWsClient {
@@ -22,12 +24,17 @@ impl CoinbaseWsClient {
         CoinbaseWsClient { ws_url, sender, message_broadcaster }
     }
 
-    pub fn subscribe(&self, product_ids: Vec<String>, channels: Vec<String>) -> AppResult<()> {
+    pub fn subscribe(
+        &self,
+        product_ids: Vec<CoinbaseSymbol>,
+        channels: Vec<String>,
+    ) -> AppResult<broadcast::Receiver<CoinbaseMessage>> {
         let request =
             CoinbaseRequest { request_type: CoinbaseRequestType::Subscribe, product_ids, channels };
         let message = serde_json::to_string(&request)?;
 
-        self.write(Message::Text(Utf8Bytes::from(&message)))
+        self.write(Message::Text(Utf8Bytes::from(&message)));
+        Ok(self.message_broadcaster.subscribe())
     }
     pub fn ws_url(&self) -> &str {
         &self.ws_url
@@ -58,7 +65,6 @@ impl WsCallback for CoinbaseWsClient {
     async fn on_message(&mut self, message: Message, receive_at: jiff::Timestamp) -> AppResult<()> {
         match message {
             Message::Text(text) => {
-                debug!("Received text message: {:?}", text);
                 let coinbase_message: CoinbaseMessage = match serde_json::from_str(&text) {
                     Ok(msg) => msg,
                     Err(e) => {
@@ -70,6 +76,11 @@ impl WsCallback for CoinbaseWsClient {
                         .into());
                     },
                 };
+                self.message_broadcaster
+                    .send(coinbase_message.clone())
+                    .map_err(|e| {
+                        AppError::WebSocketError(format!("Failed to broadcast message: {}", e))
+                    })?;
             },
             Message::Close(_) => {
                 info!("WebSocket connection closed by remote peer");

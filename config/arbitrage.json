@@ -1,0 +1,13 @@
+{
+  "pools": [
+    {
+      "dex": "uniswapv4",
+      "address": "0x1234567890abcdef1234567890abcdef12345678",
+      "symbol": "ETH-USDC"
+    }
+  ],
+  "cex": {
+    "exchange": "coinbase",
+    "ws_url": "wss://ws-feed.exchange.coinbase.com"
+  }
+}

@@ -3,7 +3,8 @@ mod models;
 #[allow(unused)]
 pub use models::{
     CoinbaseChannelMessage, CoinbaseHeartbeatMessage, CoinbaseMessage, CoinbaseRequest,
-    CoinbaseRequestType, CoinbaseResponse, CoinbaseTickerMessage,
+    CoinbaseRequestType, CoinbaseResponse, CoinbaseSymbol, CoinbaseTickerMessage,
 };
 
-mod callback;
+mod wsclient;
+pub use wsclient::CoinbaseWsClient;
