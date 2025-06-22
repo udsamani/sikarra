@@ -1,7 +1,10 @@
+//! Core data models for arbitrage trading operations.
+
 use rust_decimal::Decimal;
 use serde::Deserialize;
 use sikkara_adapters::CoinbaseSymbol;
 
+/// Real-time price data from an exchange.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Ticker {
     pub exchage: Exchange,
@@ -10,11 +13,13 @@ pub struct Ticker {
     pub timestamp: jiff::Timestamp,
 }
 
+/// Supported cryptocurrency exchanges.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum Exchange {
     Coinbase,
 }
 
+/// Trading pair symbols for arbitrage opportunities.
 #[allow(clippy::upper_case_acronyms)]
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum PoolSymbol {
@@ -51,6 +56,7 @@ impl<'de> Deserialize<'de> for PoolSymbol {
     }
 }
 
+/// Convert from Coinbase symbol to internal pool symbol.
 impl From<CoinbaseSymbol> for PoolSymbol {
     fn from(symbol: CoinbaseSymbol) -> Self {
         match symbol {
@@ -62,6 +68,7 @@ impl From<CoinbaseSymbol> for PoolSymbol {
     }
 }
 
+/// Convert from internal pool symbol to Coinbase symbol.
 impl From<PoolSymbol> for CoinbaseSymbol {
     fn from(symbol: PoolSymbol) -> Self {
         match symbol {
