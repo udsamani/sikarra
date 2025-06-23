@@ -3554,17 +3554,12 @@ dependencies = [
 ]
 
 [[package]]
-name = "sikaara-bindings"
-version = "0.1.0"
-dependencies = [
- "alloy",
-]
-
-[[package]]
 name = "sikkara-adapters"
 version = "0.1.0"
 dependencies = [
+ "alloy",
  "async-trait",
+ "futures",
  "jiff",
  "rust_decimal",
  "rust_decimal_macros",
