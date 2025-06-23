@@ -1108,6 +1108,12 @@ dependencies = [
 ]
 
 [[package]]
+name = "bnum"
+version = "0.12.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "f781dba93de3a5ef6dc5b17c9958b208f6f3f021623b360fb605ea51ce443f10"
+
+[[package]]
 name = "borsh"
 version = "1.5.7"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1556,6 +1562,16 @@ checksum = "778e2ac28f6c47af28e4907f13ffd1e1ddbd400980a9abd7c8df189bf578a5ad"
 dependencies = [
  "libc",
  "windows-sys 0.59.0",
+]
+
+[[package]]
+name = "fastnum"
+version = "0.2.10"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "f4451747a4f0b0237f73f79227f7842926ba640e774d46b70b86eebb8c60e5af"
+dependencies = [
+ "autocfg",
+ "bnum",
 ]
 
 [[package]]
@@ -3559,6 +3575,7 @@ version = "0.1.0"
 dependencies = [
  "alloy",
  "async-trait",
+ "fastnum",
  "futures",
  "jiff",
  "rust_decimal",
