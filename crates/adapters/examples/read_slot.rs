@@ -23,10 +23,13 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         Address::parse_checksummed("0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913", None)?;
 
     let pool_id = compute_pool_id(weth_address, usdc_address, 500, 10, Address::ZERO)?;
-    let mut stream = manager.watch_pool(pool_id, Duration::from_secs(30));
+    let invert = weth_address < usdc_address;
+    println!("Invert: {}", invert);
+    let mut stream = manager.watch_pool(pool_id, Duration::from_secs(30), invert);
 
     while let Some(pool_data) = stream.next().await {
         println!("Current Pool Data: {:?}", pool_data);
+        println!("Spot Price: {}", pool_data.spot_price.to_fixed(2, None));
     }
 
     Ok(())

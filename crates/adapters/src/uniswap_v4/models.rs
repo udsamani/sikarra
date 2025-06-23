@@ -5,11 +5,23 @@
 //! calculations and conversions between different price representations (tick,
 //! sqrtPriceX96, decimal price).
 
-use alloy::primitives::{
-    aliases::{I24, U24},
-    U160,
+use core::num;
+
+use alloy::{
+    dyn_abi::abi::token,
+    primitives::{
+        aliases::{I24, U24},
+        U160, U256,
+    },
+    signers::k256::elliptic_curve::consts::U25,
+};
+use fastnum::{
+    decimal::{Context, RoundingMode},
+    i512, D512, I512, U512,
 };
 use rust_decimal::Decimal;
+
+pub const Q192: I512 = I512::from_bits(U512::from_digits([0, 0, 0, 1, 0, 0, 0, 0]));
 
 /// Represents the complete state data for a Uniswap V4 pool at a specific point
 /// in time.
@@ -25,7 +37,7 @@ use rust_decimal::Decimal;
 /// - `sqrt_price_x96`: The raw square root price scaled by 2^96 (from contract)
 /// - `tick`: The current tick (logarithmic price representation)
 /// - `spot_price`: Human-readable decimal price (calculated)
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone)]
 pub struct PoolSlotData {
     /// The square root of the price scaled by 2^96.
     pub sqrt_price_x96: U160,
@@ -50,13 +62,8 @@ pub struct PoolSlotData {
     /// liquidity providers and the protocol based on the protocol fee.
     pub lp_fee: U24,
 
-    /// The spot price in human-readable decimal format.
-    ///
-    /// This represents the price of token1 in terms of token0, adjusted for
-    /// decimal differences between the tokens. For WETH/USDC pools:
-    /// - Represents: "How many USDC to buy 1 WETH"
-    /// - Example: 3289.52 means 1 WETH costs 3,289.52 USDC
-    pub spot_price: Decimal,
+    /// The calculated spot price
+    pub spot_price: SpotPrice,
 }
 
 impl PoolSlotData {
@@ -65,33 +72,133 @@ impl PoolSlotData {
     /// This constructor takes the raw contract data and performs the necessary
     /// calculations to derive the human-readable spot price. The spot price
     /// calculation includes proper decimal adjustments for the token pair.
-    pub fn new(sqrt_price_x96: U160, tick: I24, protocol_fee: U24, lp_fee: U24) -> Self {
-        let spot_price = Self::compute_spot_price(sqrt_price_x96, tick);
+    pub fn new(
+        sqrt_price_x96: U160,
+        tick: I24,
+        protocol_fee: U24,
+        lp_fee: U24,
+        token_0_decimals: u8,
+        token_1_decimals: u8,
+        invert: bool,
+    ) -> Self {
+        let spot_price = SpotPrice::new_from_sqrt_ratio_x96(
+            sqrt_price_x96,
+            token_0_decimals,
+            token_1_decimals,
+            invert,
+        );
         Self { sqrt_price_x96, tick: tick.as_i32(), protocol_fee, lp_fee, spot_price }
     }
+}
 
-    /// Computes the spot price from raw Uniswap V4 price data.
+/// High precision spot price representation of Uniswap V4 pools.
+///
+/// This structure provides exact decimal arithmetic for price calculations
+/// avoiding floating-point precision errors that could be exploited in
+/// financial applications. It handles the conversion from Uniswap's internal
+/// `sqrt_price_x96` format to human readable prices with proper token decimal
+/// adjustments
+///
+/// # Fields
+///
+/// - `numerator`: The numerator of the price ratio.
+/// - `denominator`: The denominator of the price ratio.
+/// - `scale`: A decimal scale factor to adjust the price based on token
+///   decimals.
+#[derive(Debug, Clone)]
+pub struct SpotPrice {
+    numerator: I512,
+    denominator: I512,
+    scale: D512,
+}
+
+impl SpotPrice {
+    /// Creates a new `SpotPrice` instance from the square root price ratio.
     ///
-    /// This method converts from Uniswap's internal price representation to a
-    /// human-readable decimal price suitable for display and calculations.
-    /// It handles the mathematical conversion and decimal adjustments needed
-    /// for different token pairs.
-    pub fn compute_spot_price(sqrt_price_x96: U160, tick: I24) -> Decimal {
-        // TODO: Implement price calculation
-        // This is a placeholder that should be replaced with actual calculation logic
-        Decimal::ZERO
+    /// This method performs core price calculation that converts from Uniswap's
+    /// internal format to a human readable price with proper token decimal
+    /// adjustments
+    ///
+    /// # Arguments
+    ///
+    /// - `sqrt_ratio_x96`: The square root price ratio in x96 format.
+    /// - `token_0_decimals`: The number of decimals for token 0.
+    /// - `token_1_decimals`: The number of decimals for token 1.
+    /// - `invert`: Whether to invert the price ratio aka compute token0/token1
+    ///   or token1/token0.
+    pub fn new_from_sqrt_ratio_x96(
+        sqrt_ratio_x96: U160,
+        token_0_decimals: u8,
+        token_1_decimals: u8,
+        invert: bool,
+    ) -> Self {
+        // Calculate the numerator and denominator based on the square root price
+        let x96_i512 = I512::from_le_slice(&sqrt_ratio_x96.as_le_bytes()).unwrap();
+        let ratio_x192 = x96_i512.pow(2);
+
+        let scale_0 = i512!(10).pow(token_0_decimals as u32);
+        let scale_1 = i512!(10).pow(token_1_decimals as u32);
+        let scale_0_decimal = D512::from_parts(
+            scale_0.to_bits(),
+            0,
+            match scale_0.is_negative() {
+                true => fastnum::decimal::Sign::Minus,
+                false => fastnum::decimal::Sign::Plus,
+            },
+            Context::default(),
+        );
+        let scale_1_decimal = D512::from_parts(
+            scale_1.to_bits(),
+            0,
+            match scale_1.is_negative() {
+                true => fastnum::decimal::Sign::Minus,
+                false => fastnum::decimal::Sign::Plus,
+            },
+            Context::default(),
+        );
+        let scale = scale_0_decimal / scale_1_decimal;
+
+        let (numerator, denominator) = if invert { (ratio_x192, Q192) } else { (Q192, ratio_x192) };
+        Self { numerator, denominator, scale }
     }
 
-    /// Returns the spot price rounded to a specific number of decimal places.
-    pub fn spot_price_rounded(&self, decimal_places: u32) -> Decimal {
-        self.spot_price.round_dp(decimal_places)
+    /// Returns the adjusted price in decimal format, taking into account the
+    /// token decimal scales.
+    pub fn adjsusted_to_decimal(&self) -> D512 {
+        self.to_decimal() * self.scale
     }
 
-    /// Formats the spot price for display purposes.
-    ///
-    /// Returns a string representation of the price with dollar sign and
-    /// two decimal places, suitable for user interfaces.
-    pub fn format_price(&self) -> String {
-        format!("${:.2}", self.spot_price)
+    fn to_decimal(&self) -> D512 {
+        let numerator_decimal = D512::from_parts(
+            self.numerator.to_bits(),
+            0,
+            match self.numerator.is_negative() {
+                true => fastnum::decimal::Sign::Minus,
+                false => fastnum::decimal::Sign::Plus,
+            },
+            Context::default(),
+        );
+
+        let denominator_decimal = D512::from_parts(
+            self.denominator.to_bits(),
+            0,
+            match self.denominator.is_negative() {
+                true => fastnum::decimal::Sign::Minus,
+                false => fastnum::decimal::Sign::Plus,
+            },
+            Context::default(),
+        );
+
+        numerator_decimal / denominator_decimal
+    }
+
+    /// Formats the price to fixed decimal representation with specified
+    /// rounding controls
+    pub fn to_fixed(&self, rounding_decimals: u8, rounding_mode: Option<RoundingMode>) -> String {
+        let rounding = rounding_mode.unwrap_or(RoundingMode::HalfUp);
+        self.adjsusted_to_decimal()
+            .with_rounding_mode(rounding)
+            .round(rounding_decimals as i16)
+            .to_string()
     }
 }

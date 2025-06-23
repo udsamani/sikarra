@@ -84,7 +84,12 @@ where
     /// - **Arbitrage**: 500ms - 1s (catch every price movement)
     /// - **Price monitoring**: 2-5s (balance updates vs efficiency)
     /// - **Analytics**: 10-30s (reduce RPC load)
-    pub fn watch_pool(&self, pool_id: B256, poll_interval: Duration) -> PoolSlotDataStream {
+    pub fn watch_pool(
+        &self,
+        pool_id: B256,
+        poll_interval: Duration,
+        invert: bool,
+    ) -> PoolSlotDataStream {
         let provider = self.provider.clone();
         let address = self.address;
 
@@ -107,6 +112,9 @@ where
                             slot.tick,
                             slot.protocolFee,
                             slot.lpFee,
+                            18,
+                            6,
+                            invert,
                         );
                         // Return data and continue the stream
                         println!("Fetched pool state: {:?}", slot);
