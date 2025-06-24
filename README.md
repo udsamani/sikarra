@@ -13,7 +13,7 @@ The system is based on an even driven architecture.
 
 ## Core Components
 - `sikkara-adapters`: Exchange adapters for CEX (Coinbase WebSocket) and DEX (Uniswap V4) integration
-- `sikkara-arbitrager`: Main arbitrage detection and market making logic
+- `sikkara-bot`: Main bot logic
 - `sikkara-core`: Shared utilities, engine framework, and common types
 - `sikkara-wsclient`: WebSocket client infrastructure with reconnection and heartbeat
 
