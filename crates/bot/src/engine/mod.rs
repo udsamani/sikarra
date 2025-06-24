@@ -19,7 +19,7 @@ pub use price_feed::{PriceFeed, PriceFeedSubscription};
 mod pool;
 pub use pool::{PoolFeed, PoolUpdateStream};
 
-use crate::strategy::ArbitrageStrategy;
+use crate::strategy::BotStrategy;
 
 /// Core arbitrage trading engine that processes market events and executes
 /// strategies. Note this engine is designed to be per pool/pair, meaning it
@@ -35,7 +35,7 @@ use crate::strategy::ArbitrageStrategy;
 /// * `S` - The arbitrage strategy implementation that defines trading logic
 pub struct ArbitrageEngine<S>
 where
-    S: ArbitrageStrategy,
+    S: BotStrategy,
 {
     /// Unique identifier for this engine instance
     name: String,
@@ -47,7 +47,7 @@ where
 
 impl<S> ArbitrageEngine<S>
 where
-    S: ArbitrageStrategy,
+    S: BotStrategy,
 {
     /// Creates a new arbitrage engine with the specified strategy and trading
     /// pool.
@@ -94,7 +94,7 @@ where
 #[async_trait::async_trait]
 impl<S> Engine<InternalEvent, InternalAction> for ArbitrageEngine<S>
 where
-    S: ArbitrageStrategy + Send + Sync,
+    S: BotStrategy + Send + Sync,
 {
     /// Returns the unique identifier for this engine instance.
     ///
@@ -128,7 +128,7 @@ where
                 );
 
                 self.strategy
-                    .determine_arbitrage_opportunity(InternalEvent::TickerUpdate(ticker));
+                    .handle_internal_event(InternalEvent::TickerUpdate(ticker));
                 Ok(None)
             },
             InternalEvent::PoolPriceUpdate(update) => {
@@ -138,7 +138,7 @@ where
                     price = %update.price,
                 );
                 self.strategy
-                    .determine_arbitrage_opportunity(InternalEvent::PoolPriceUpdate(update));
+                    .handle_internal_event(InternalEvent::PoolPriceUpdate(update));
                 Ok(None)
             },
         }

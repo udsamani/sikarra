@@ -3,18 +3,18 @@ use tracing::{info, warn};
 
 use crate::{
     engine::{InternalEvent, PoolSymbol},
-    strategy::ArbitrageStrategy,
+    strategy::BotStrategy,
 };
 
 /// A simple logging arbitrage strategy that logs if an arbitrage opportunity
 /// exists
-pub struct LogginArbitrageStrategy {
+pub struct LoggingBotStrategy {
     symbol: PoolSymbol,
     last_cex_price: Option<Decimal>,
     last_dex_price: Option<Decimal>,
 }
 
-impl LogginArbitrageStrategy {
+impl LoggingBotStrategy {
     pub fn new(symbol: PoolSymbol) -> Self {
         Self { symbol, last_cex_price: None, last_dex_price: None }
     }
@@ -40,8 +40,8 @@ impl LogginArbitrageStrategy {
     }
 }
 
-impl ArbitrageStrategy for LogginArbitrageStrategy {
-    fn determine_arbitrage_opportunity(&mut self, event: InternalEvent) {
+impl BotStrategy for LoggingBotStrategy {
+    fn handle_internal_event(&mut self, event: InternalEvent) {
         match event {
             InternalEvent::TickerUpdate(ticker) if ticker.symbol == self.symbol => {
                 self.last_cex_price = Some(ticker.price);

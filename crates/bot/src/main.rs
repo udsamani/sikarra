@@ -15,21 +15,20 @@ mod strategy;
 
 fn main() {
     // Read config path from environment variable, with a default fallback
-    let config_path =
-        env::var("ARBITRAGE_CONFIG_PATH").unwrap_or_else(|_| "config/arbitrage.json".to_string());
+    let config_path = env::var("BOT_CONFIG_PATH").unwrap_or_else(|_| "config/bot.json".to_string());
 
     // Check if config file exists
     if !Path::new(&config_path).exists() {
         eprintln!("Config file not found at: {}", config_path);
-        eprintln!("Please set ARBITRAGE_CONFIG_PATH environment variable or ensure the default config file exists");
+        eprintln!("Please set BOT_CONFIG_PATH environment variable or ensure the default config file exists");
         std::process::exit(1);
     }
     let content =
         std::fs::read_to_string(&config_path).expect("Failed to read the configuration file");
 
-    let params: config::ArbitrageConfig =
+    let params: config::BotConfig =
         serde_json::from_str(&content).expect("Failed to parse the configuration file");
 
-    let runner = runner::ArbitrageRunner {};
+    let runner = runner::BotRunner {};
     run(params, runner);
 }

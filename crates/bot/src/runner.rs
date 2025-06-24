@@ -14,22 +14,22 @@ use tokio::sync::{broadcast, mpsc};
 
 use crate::{
     collectors::{PoolFeedCollector, PriceFeedCollector},
-    config::{ArbitrageConfig, CexConfig, PoolConfig},
+    config::{BotConfig, CexConfig, PoolConfig},
     engine::{ArbitrageEngine, InternalAction, InternalEvent, Pool},
-    strategy::LogginArbitrageStrategy,
+    strategy::LoggingBotStrategy,
 };
 
 #[derive(Debug, Clone)]
-pub struct ArbitrageRunner {}
+pub struct BotRunner {}
 
 #[async_trait::async_trait]
-impl Runner<ArbitrageConfig> for ArbitrageRunner {
+impl Runner<BotConfig> for BotRunner {
     fn name(&self) -> &str { "arbitrage_runner" }
 
     // TODO: Break this funtion down. Hard to read.
     async fn run(
         self,
-        parameters: ArbitrageConfig,
+        parameters: BotConfig,
         shutdown: tokio_util::sync::CancellationToken,
     ) -> AppResult<()> {
         let (ws_message_sender, ws_message_receiver) = mpsc::channel(100);
@@ -61,7 +61,7 @@ impl Runner<ArbitrageConfig> for ArbitrageRunner {
 
             // Setup the engine
             let engine = ArbitrageEngine::new(
-                LogginArbitrageStrategy::new(pool.symbol_owned()),
+                LoggingBotStrategy::new(pool.symbol_owned()),
                 pool.symbol().to_string(),
             );
             runner.add_engine(Box::new(engine));
