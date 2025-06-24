@@ -90,7 +90,6 @@ pub enum CoinbaseSymbol {
     EthUsd,
     BtcUsd,
     EthUsdt,
-    BtcUsdt,
 }
 
 impl std::fmt::Display for CoinbaseSymbol {
@@ -99,7 +98,6 @@ impl std::fmt::Display for CoinbaseSymbol {
             CoinbaseSymbol::EthUsd => write!(f, "ETH-USD"),
             CoinbaseSymbol::BtcUsd => write!(f, "BTC-USD"),
             CoinbaseSymbol::EthUsdt => write!(f, "ETH-USDT"),
-            CoinbaseSymbol::BtcUsdt => write!(f, "BTC-USDT"),
         }
     }
 }
@@ -123,11 +121,7 @@ impl<'de> Deserialize<'de> for CoinbaseSymbol {
             "ETH-USD" => Ok(CoinbaseSymbol::EthUsd),
             "BTC-USD" => Ok(CoinbaseSymbol::BtcUsd),
             "ETH-USDT" => Ok(CoinbaseSymbol::EthUsdt),
-            "BTC-USDT" => Ok(CoinbaseSymbol::BtcUsdt),
-            _ => Err(serde::de::Error::unknown_variant(
-                &s,
-                &["ETH-USD", "BTC-USD", "ETH-USDT", "BTC-USDT"],
-            )),
+            _ => Err(serde::de::Error::unknown_variant(&s, &["ETH-USD", "BTC-USD", "ETH-USDT"])),
         }
     }
 }

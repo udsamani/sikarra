@@ -21,5 +21,14 @@
   "cex": {
     "exchange": "coinbase",
     "ws_url": "wss://ws-feed.exchange.coinbase.com"
+  },
+  "market_making": {
+    "base_spread_bps": 50,
+    "max_spread_bps": 100,
+    "min_spread_bps": 10,
+    "gas_price": "0.5",
+    "arbitrage_threshold_bps": 10,
+    "arbitrage_tighten_factor": "0.7",
+    "arbitrage_widen_factor": "1.3"
   }
 }

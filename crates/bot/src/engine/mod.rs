@@ -10,7 +10,8 @@ use tracing::{debug, info};
 
 mod models;
 pub use models::{
-    Exchange, InternalAction, InternalEvent, Pool, PoolPriceUpdate, PoolSymbol, Ticker,
+    Exchange, InternalAction, InternalEvent, MarketCondition, MarketMakingRange, Pool,
+    PoolPriceUpdate, PoolSymbol, Ticker,
 };
 
 mod price_feed;

@@ -18,6 +18,8 @@ pub struct BotConfig {
     pub pools: Vec<PoolConfig>,
     /// Centralized exchange configuration for price feeds
     pub cex: CexConfig,
+    /// Market making strategy parameters
+    pub market_making: MarketMakingConfig,
 }
 
 /// Configuration for a decentralized exchange pool.
@@ -100,6 +102,30 @@ pub enum CexConfig {
     },
 }
 
+/// Configuration for market making strategy parameters.
+///
+/// # Fields
+/// - `base_spread_bps`: The base spread in basis points used to calculate the
+///   initial bid/ask prices.
+/// - `max_spread_bps`: The maximum spread in basis points allowed for the
+///   bid/ask prices.
+/// - `min_spread_bps`: The minimum spread in basis points that can be applied
+///   to the CEX price.
+/// - `gas_price`: The current gas price in the network, used for transaction
+///   cost calculations
+/// - `arbitrage_threshold_bps`: The threshold in basis points for triggering
+///   during arbitrage opportunities.
+#[derive(Debug, Clone, Deserialize)]
+pub struct MarketMakingConfig {
+    pub base_spread_bps: u32,
+    pub max_spread_bps: u32,
+    pub min_spread_bps: u32,
+    pub gas_price: rust_decimal::Decimal,
+    pub arbitrage_tighten_factor: rust_decimal::Decimal,
+    pub arbitrage_widen_factor: rust_decimal::Decimal,
+    pub arbitrage_threshold_bps: u32,
+}
+
 #[cfg(test)]
 mod tests {
     use serde_json::json;
@@ -132,6 +158,15 @@ mod tests {
             "cex": {
                 "exchange": "coinbase",
                 "ws_url": "wss://ws-feed.pro.coinbase.com"
+            },
+            "market_making": {
+                "base_spread_bps": 50,
+                "max_spread_bps": 100,
+                "min_spread_bps": 10,
+                "gas_price": "0.5",
+                "arbitrage_threshold_bps": 100,
+                "arbitrage_tighten_factor": "0.7",
+                "arbitrage_widen_factor": "1.3"
             }
         });
 
@@ -149,14 +184,22 @@ mod tests {
             scaling,
         } = &config.pools[0];
         assert_eq!(address, "0x1234567890abcdef1234567890abcdef12345678");
-        assert_eq!(*symbol, PoolSymbol::ETHUSDC);
+        assert_eq!(*symbol, PoolSymbol::EthUsdc);
         assert_eq!(token_0.decimals, 18);
         assert_eq!(token_1.decimals, 6);
-        assert_eq!(*fee_tier, 3000);
+        assert_eq!(*fee_tier, 500);
         assert_eq!(*tick_spacing, 10);
         assert_eq!(node_url, "https://mainnet.infura.io/v3/YOUR_INFURA_PROJECT_ID");
         assert_eq!(*scaling, 2);
         let CexConfig::Coinbase { ws_url } = &config.cex;
         assert_eq!(ws_url, "wss://ws-feed.pro.coinbase.com");
+        let market_making = config.market_making;
+        assert_eq!(market_making.base_spread_bps, 50);
+        assert_eq!(market_making.max_spread_bps, 100);
+        assert_eq!(market_making.min_spread_bps, 10);
+        assert_eq!(market_making.gas_price.to_string(), "0.5");
+        assert_eq!(market_making.arbitrage_threshold_bps, 100);
+        assert_eq!(market_making.arbitrage_tighten_factor.to_string(), "0.7");
+        assert_eq!(market_making.arbitrage_widen_factor.to_string(), "1.3");
     }
 }

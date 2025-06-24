@@ -61,7 +61,7 @@ impl Runner<BotConfig> for BotRunner {
 
             // Setup the engine
             let engine = ArbitrageEngine::new(
-                LoggingBotStrategy::new(pool.symbol_owned()),
+                LoggingBotStrategy::new(pool.symbol_owned(), parameters.market_making.clone()),
                 pool.symbol().to_string(),
             );
             runner.add_engine(Box::new(engine));
