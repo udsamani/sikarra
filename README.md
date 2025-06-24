@@ -54,10 +54,14 @@ cargo test
 ### Running
 
 ```bash
-# Start the arbitrage monitor
-cargo run --bin arbitrager
+# Start the bot
+cargo run --bin sikarra-bot
 
 
 # Enable debug logging
-RUST_LOG=debug cargo run --bin arbitrager
+RUST_LOG=debug cargo run --bin sikarra-bot
 ```
+
+- A default configuration is provided in `config` folder.
+- It subscribes to `ETH-USDC` trading pair.
+- Please note that events from CEX and DEX are only logged in debug mode. So if interested in seeing those events please turn on the DEBUG logs, as shown above

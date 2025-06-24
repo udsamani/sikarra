@@ -8,12 +8,12 @@ use serde::Deserialize;
 
 use crate::engine::PoolSymbol;
 
-/// Main configuration for arbitrage trading operations.
+/// Main configuration for  trading operations.
 ///
 /// Contains configuration for both DEX pools and CEX connections that will be
-/// monitored for arbitrage opportunities.
+/// monitored for arbitrage and market making simulation opportunities.
 #[derive(Debug, Clone, Deserialize)]
-pub struct ArbitrageConfig {
+pub struct BotConfig {
     /// List of DEX pools to monitor for arbitrage opportunities
     pub pools: Vec<PoolConfig>,
     /// Centralized exchange configuration for price feeds
@@ -135,7 +135,7 @@ mod tests {
             }
         });
 
-        let config: ArbitrageConfig = serde_json::from_value(json_data).unwrap();
+        let config: BotConfig = serde_json::from_value(json_data).unwrap();
         assert_eq!(config.pools.len(), 1);
         let PoolConfig::UniswapV4 {
             address,

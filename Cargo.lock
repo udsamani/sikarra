@@ -3570,27 +3570,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "sikkara-adapters"
-version = "0.1.0"
-dependencies = [
- "alloy",
- "async-trait",
- "fastnum",
- "futures",
- "jiff",
- "rust_decimal",
- "rust_decimal_macros",
- "serde",
- "serde_json",
- "sikkara-core",
- "sikkara-wsclient",
- "tokio",
- "tokio-tungstenite",
- "tracing",
-]
-
-[[package]]
-name = "sikkara-arbitrager"
+name = "sikarra-bot"
 version = "0.1.0"
 dependencies = [
  "alloy",
@@ -3608,6 +3588,26 @@ dependencies = [
  "tokio",
  "tokio-stream",
  "tokio-util",
+ "tracing",
+]
+
+[[package]]
+name = "sikkara-adapters"
+version = "0.1.0"
+dependencies = [
+ "alloy",
+ "async-trait",
+ "fastnum",
+ "futures",
+ "jiff",
+ "rust_decimal",
+ "rust_decimal_macros",
+ "serde",
+ "serde_json",
+ "sikkara-core",
+ "sikkara-wsclient",
+ "tokio",
+ "tokio-tungstenite",
  "tracing",
 ]
 
