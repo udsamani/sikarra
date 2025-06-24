@@ -16,7 +16,7 @@ use crate::{
     collectors::{PoolFeedCollector, PriceFeedCollector},
     config::{ArbitrageConfig, CexConfig, PoolConfig},
     engine::{ArbitrageEngine, InternalAction, InternalEvent, Pool},
-    strategy::SimpleArbitrageStrategy,
+    strategy::LogginArbitrageStrategy,
 };
 
 #[derive(Debug, Clone)]
@@ -60,8 +60,10 @@ impl Runner<ArbitrageConfig> for ArbitrageRunner {
             );
 
             // Setup the engine
-            let engine =
-                ArbitrageEngine::new(SimpleArbitrageStrategy {}, pool.symbol().to_string());
+            let engine = ArbitrageEngine::new(
+                LogginArbitrageStrategy::new(pool.symbol_owned()),
+                pool.symbol().to_string(),
+            );
             runner.add_engine(Box::new(engine));
 
             // Setup the price feed collector
@@ -105,13 +107,15 @@ impl Runner<ArbitrageConfig> for ArbitrageRunner {
             let pool_feed_collector = PoolFeedCollector::new(pool, state_manager);
             runner.add_collector(Box::new(pool_feed_collector));
 
+            // Run all tasks
             let parameters_clone = parameters.clone();
             let child_token = shutdown.child_token();
             runner_tasks
                 .push(tokio::spawn(async move { runner.run(parameters_clone, child_token).await }));
         }
-        let results = join_all(runner_tasks).await;
 
+        // Wait for all tasks to complete
+        let results = join_all(runner_tasks).await;
         for result in results {
             match result {
                 Ok(Ok(_)) => {
