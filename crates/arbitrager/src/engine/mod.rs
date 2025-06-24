@@ -8,7 +8,18 @@
 use sikkara_core::{AppResult, Engine};
 use tracing::info;
 
-use crate::{action::InternalAction, event::InternalEvent, strategy::ArbitrageStrategy};
+mod models;
+pub use models::{
+    Exchange, InternalAction, InternalEvent, Pool, PoolPriceUpdate, PoolSymbol, Ticker,
+};
+
+mod price_feed;
+pub use price_feed::{PriceFeed, PriceFeedSubscription};
+
+mod pool;
+pub use pool::{PoolFeed, PoolUpdateStream};
+
+use crate::strategy::ArbitrageStrategy;
 
 /// Core arbitrage trading engine that processes market events and executes
 /// strategies. Note this engine is designed to be per pool/pair, meaning it
@@ -61,18 +72,14 @@ where
     /// # Returns
     ///
     /// Returns a reference to the trading pool identifier string.
-    pub fn pool(&self) -> &str {
-        &self.pool
-    }
+    pub fn pool(&self) -> &str { &self.pool }
 
     /// Gets a reference to the arbitrage strategy.
     ///
     /// # Returns
     ///
     /// Returns a reference to the configured arbitrage strategy.
-    pub fn strategy(&self) -> &S {
-        &self.strategy
-    }
+    pub fn strategy(&self) -> &S { &self.strategy }
 
     /// Gets a mutable reference to the arbitrage strategy.
     ///
@@ -81,9 +88,7 @@ where
     /// # Returns
     ///
     /// Returns a mutable reference to the configured arbitrage strategy.
-    pub fn strategy_mut(&mut self) -> &mut S {
-        &mut self.strategy
-    }
+    pub fn strategy_mut(&mut self) -> &mut S { &mut self.strategy }
 }
 
 #[async_trait::async_trait]
@@ -96,9 +101,7 @@ where
     /// # Returns
     ///
     /// Returns "arbitrage_engine" as the engine identifier.
-    fn id(&self) -> &str {
-        &self.name
-    }
+    fn id(&self) -> &str { &self.name }
 
     /// Processes incoming market events and generates trading actions.
     ///
@@ -119,8 +122,9 @@ where
         match event {
             InternalEvent::TickerUpdate(ticker) => {
                 info!(
-                    "Processing ticker update for {}: price=${} at {}",
-                    ticker.symbol, ticker.price, ticker.timestamp
+                    exchange = "cex",
+                    symbol = %ticker.symbol,
+                    price = %ticker.price,
                 );
 
                 // TODO: Apply arbitrage strategy to evaluate opportunity
@@ -130,6 +134,14 @@ where
                 //     return Ok(Some(InternalAction::PlaceOrder(trade.into())));
                 // }
 
+                Ok(None)
+            },
+            InternalEvent::PoolPriceUpdate(update) => {
+                info!(
+                    exchange = "dex",
+                    symbol = %update.symbol,
+                    price = %update.price,
+                );
                 Ok(None)
             },
         }

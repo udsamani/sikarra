@@ -1,8 +1,11 @@
 //! Core data models for arbitrage trading operations.
 
+use alloy::primitives::{keccak256, Address, B256};
 use rust_decimal::Decimal;
 use serde::Deserialize;
 use sikkara_adapters::CoinbaseSymbol;
+
+use crate::config::TokenConfig;
 
 /// Real-time price data from an exchange.
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -13,10 +16,66 @@ pub struct Ticker {
     pub timestamp: jiff::Timestamp,
 }
 
+/// Price update from a pool
+#[derive(Debug, Clone)]
+pub struct PoolPriceUpdate {
+    pub symbol: PoolSymbol,
+    pub price: Decimal,
+}
+
 /// Supported cryptocurrency exchanges.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum Exchange {
     Coinbase,
+}
+
+/// Represents a trading pool configuration for arbitrage opportunities.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct Pool {
+    pub symbol: PoolSymbol,
+    pub token_0: Token,
+    pub token_1: Token,
+    pub fee_tier: u32,
+    pub tick_spacing: i32,
+    pub hook: Address,
+    pub scaling: u8,
+}
+
+impl Pool {
+    pub fn compute_pool_id(&self) -> B256 {
+        let (currency0, currency1) = (self.token_0.address, self.token_1.address);
+
+        // Ensure currency0 < currency1
+        let (currency0, currency1) =
+            if currency0 < currency1 { (currency0, currency1) } else { (currency1, currency0) };
+
+        let encoded = alloy::sol_types::SolValue::abi_encode(&(
+            currency0,
+            currency1,
+            self.fee_tier,
+            self.tick_spacing,
+            self.hook,
+        ));
+
+        keccak256(encoded)
+    }
+}
+
+/// Corresponds to a token in a trading pool.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct Token {
+    pub address: Address,
+    pub decimals: u8,
+}
+
+impl From<&TokenConfig> for Token {
+    fn from(config: &TokenConfig) -> Self {
+        Self {
+            address: Address::parse_checksummed(&config.address, None)
+                .expect("Invalid token address"),
+            decimals: config.decimals,
+        }
+    }
 }
 
 /// Trading pair symbols for arbitrage opportunities.
@@ -78,4 +137,15 @@ impl From<PoolSymbol> for CoinbaseSymbol {
             PoolSymbol::BTCUSDT => CoinbaseSymbol::BtcUsdt,
         }
     }
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum InternalAction {
+    Opportunity,
+}
+
+#[derive(Debug, Clone)]
+pub enum InternalEvent {
+    TickerUpdate(Ticker),
+    PoolPriceUpdate(PoolPriceUpdate),
 }

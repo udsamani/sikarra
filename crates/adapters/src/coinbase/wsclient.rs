@@ -36,9 +36,23 @@ impl CoinbaseWsClient {
         self.write(Message::Text(Utf8Bytes::from(&message)));
         Ok(self.message_broadcaster.subscribe())
     }
-    pub fn ws_url(&self) -> &str {
-        &self.ws_url
+
+    pub fn unsubscribe(
+        &self,
+        product_ids: Vec<CoinbaseSymbol>,
+        channels: Vec<String>,
+    ) -> AppResult<()> {
+        let request = CoinbaseRequest {
+            request_type: CoinbaseRequestType::Unsubscribe,
+            product_ids,
+            channels,
+        };
+        let message = serde_json::to_string(&request)?;
+
+        self.write(Message::Text(Utf8Bytes::from(&message)))
     }
+
+    pub fn ws_url(&self) -> &str { &self.ws_url }
 
     pub fn write(&self, message: Message) -> AppResult<()> {
         match self.sender.try_send(message) {
@@ -50,9 +64,7 @@ impl CoinbaseWsClient {
         }
     }
 
-    pub fn close(&self) -> AppResult<()> {
-        self.write(Message::Close(None))
-    }
+    pub fn close(&self) -> AppResult<()> { self.write(Message::Close(None)) }
 }
 
 #[async_trait::async_trait]

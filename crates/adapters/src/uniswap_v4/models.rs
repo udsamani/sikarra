@@ -164,9 +164,7 @@ impl SpotPrice {
 
     /// Returns the adjusted price in decimal format, taking into account the
     /// token decimal scales.
-    pub fn adjsusted_to_decimal(&self) -> D512 {
-        self.to_decimal() * self.scale
-    }
+    pub fn adjsusted_to_decimal(&self) -> D512 { self.to_decimal() * self.scale }
 
     fn to_decimal(&self) -> D512 {
         let numerator_decimal = D512::from_parts(

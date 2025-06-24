@@ -18,13 +18,9 @@ impl WsClient {
         WsClient { ws_url, producer, heartbeat_millis, receiver: Some(receiver) }
     }
 
-    pub fn ws_url(&self) -> &str {
-        &self.ws_url
-    }
+    pub fn ws_url(&self) -> &str { &self.ws_url }
 
-    pub fn heartbeat_millis(&self) -> u64 {
-        self.heartbeat_millis
-    }
+    pub fn heartbeat_millis(&self) -> u64 { self.heartbeat_millis }
 
     pub fn write(&self, message: Message) -> AppResult<()> {
         match self.producer.try_send(message) {
@@ -36,9 +32,7 @@ impl WsClient {
         }
     }
 
-    pub fn close(&self) -> AppResult<()> {
-        self.write(Message::Close(None))
-    }
+    pub fn close(&self) -> AppResult<()> { self.write(Message::Close(None)) }
 
     pub fn consumer<C>(&mut self, callback: C) -> AppResult<WsConsumer<C>>
     where

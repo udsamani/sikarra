@@ -1,15 +1,21 @@
+use std::sync::Arc;
+
+use alloy::{
+    contract,
+    primitives::Address,
+    providers::ProviderBuilder,
+    transports::{http::reqwest::Url, ws},
+};
 use futures::future::join_all;
-use sikkara_adapters::CoinbaseWsClient;
-use sikkara_core::{AppResult, EngineRunner, ExponentialBackoff, Runner};
+use sikkara_adapters::{CoinbaseWsClient, UniswapV4StateViewManager};
+use sikkara_core::{AppResult, Collector, EngineRunner, ExponentialBackoff, Runner};
 use sikkara_wsclient::WsConsumer;
 use tokio::sync::{broadcast, mpsc};
 
 use crate::{
-    action::InternalAction,
-    collectors::PriceFeedCollector,
-    config::{ArbitrageConfig, CexConfig},
-    engine::ArbitrageEngine,
-    event::InternalEvent,
+    collectors::{PoolFeedCollector, PriceFeedCollector},
+    config::{ArbitrageConfig, CexConfig, PoolConfig},
+    engine::{ArbitrageEngine, InternalAction, InternalEvent, Pool},
     strategy::SimpleArbitrageStrategy,
 };
 
@@ -18,10 +24,9 @@ pub struct ArbitrageRunner {}
 
 #[async_trait::async_trait]
 impl Runner<ArbitrageConfig> for ArbitrageRunner {
-    fn name(&self) -> &str {
-        "arbitrage_runner"
-    }
+    fn name(&self) -> &str { "arbitrage_runner" }
 
+    // TODO: Break this funtion down. Hard to read.
     async fn run(
         self,
         parameters: ArbitrageConfig,
@@ -54,12 +59,51 @@ impl Runner<ArbitrageConfig> for ArbitrageRunner {
                 500,
             );
 
+            // Setup the engine
             let engine =
                 ArbitrageEngine::new(SimpleArbitrageStrategy {}, pool.symbol().to_string());
             runner.add_engine(Box::new(engine));
 
+            // Setup the price feed collector
             let price_feed_collector = PriceFeedCollector::new(pool.symbol_owned(), client.clone());
             runner.add_collector(Box::new(price_feed_collector));
+
+            // Setup the pool feed collector
+            let PoolConfig::UniswapV4 {
+                address,
+                symbol,
+                token_0,
+                token_1,
+                fee_tier,
+                node_url,
+                hook_address,
+                tick_spacing,
+                scaling,
+            } = pool;
+            let url = Url::parse(node_url).expect("Invalid node URL");
+            let provider = ProviderBuilder::new().connect_http(url);
+            let contract_address =
+                Address::parse_checksummed(address, None).expect("Invalid contract address");
+            let state_manager =
+                UniswapV4StateViewManager::new(Arc::new(provider), contract_address);
+
+            let hook = if hook_address.is_none() {
+                Address::ZERO
+            } else {
+                Address::parse_checksummed(hook_address.as_ref().unwrap(), None)
+                    .expect("Invalid hook address")
+            };
+            let pool = Pool {
+                symbol: symbol.clone(),
+                token_0: token_0.into(),
+                token_1: token_1.into(),
+                fee_tier: *fee_tier,
+                tick_spacing: *tick_spacing,
+                hook,
+                scaling: *scaling,
+            };
+            let pool_feed_collector = PoolFeedCollector::new(pool, state_manager);
+            runner.add_collector(Box::new(pool_feed_collector));
 
             let parameters_clone = parameters.clone();
             let child_token = shutdown.child_token();

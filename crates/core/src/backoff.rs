@@ -15,9 +15,7 @@ impl Default for ExponentialBackoff {
     /// - `min_secs` set to 1 second
     /// - `max_secs` set to 60 seconds
     /// - `factor` set to 2 (doubling the backoff time)
-    fn default() -> Self {
-        Self::new(10, 1, 60, 2)
-    }
+    fn default() -> Self { Self::new(10, 1, 60, 2) }
 }
 
 impl ExponentialBackoff {
@@ -34,14 +32,10 @@ impl ExponentialBackoff {
     }
 
     /// Returns the current backoff value in seconds.
-    pub fn value_secs(&self) -> u32 {
-        self.value_secs
-    }
+    pub fn value_secs(&self) -> u32 { self.value_secs }
 
     /// Get iteration count
-    pub fn get_iteration_count(&self) -> u8 {
-        self.counter
-    }
+    pub fn get_iteration_count(&self) -> u8 { self.counter }
 }
 
 impl Iterator for ExponentialBackoff {

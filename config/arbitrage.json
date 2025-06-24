@@ -2,8 +2,20 @@
   "pools": [
     {
       "dex": "uniswapv4",
-      "address": "0x1234567890abcdef1234567890abcdef12345678",
-      "symbol": "ETH-USDC"
+      "address": "0xA3c0c9b65baD0b08107Aa264b0f3dB444b867A71",
+      "symbol": "ETH-USDC",
+      "token_0": {
+        "address": "0x4200000000000000000000000000000000000006",
+        "decimals": 18
+      },
+      "token_1": {
+        "address": "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913",
+        "decimals": 6
+      },
+      "fee_tier": 500,
+      "node_url": "https://mainnet.base.org",
+      "tick_spacing": 10,
+      "scaling": 2
     }
   ],
   "cex": {
