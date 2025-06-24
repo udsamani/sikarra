@@ -6,7 +6,7 @@
 //! opportunities and generate appropriate trading actions.
 
 use sikkara_core::{AppResult, Engine};
-use tracing::info;
+use tracing::{debug, info};
 
 mod models;
 pub use models::{
@@ -121,27 +121,24 @@ where
     async fn process_event(&mut self, event: InternalEvent) -> AppResult<Option<InternalAction>> {
         match event {
             InternalEvent::TickerUpdate(ticker) => {
-                info!(
+                debug!(
                     exchange = "cex",
                     symbol = %ticker.symbol,
                     price = %ticker.price,
                 );
 
-                // TODO: Apply arbitrage strategy to evaluate opportunity
-                // let opportunity = self.strategy.evaluate_opportunity(&ticker).await?;
-                //
-                // if let Some(trade) = opportunity {
-                //     return Ok(Some(InternalAction::PlaceOrder(trade.into())));
-                // }
-
+                self.strategy
+                    .determine_arbitrage_opportunity(InternalEvent::TickerUpdate(ticker));
                 Ok(None)
             },
             InternalEvent::PoolPriceUpdate(update) => {
-                info!(
+                debug!(
                     exchange = "dex",
                     symbol = %update.symbol,
                     price = %update.price,
                 );
+                self.strategy
+                    .determine_arbitrage_opportunity(InternalEvent::PoolPriceUpdate(update));
                 Ok(None)
             },
         }
