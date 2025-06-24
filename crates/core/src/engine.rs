@@ -118,9 +118,7 @@ where
     Action: Send + Clone + Sync + 'static,
     P: Send + Sync + 'static,
 {
-    fn name(&self) -> &str {
-        &self.name
-    }
+    fn name(&self) -> &str { &self.name }
 
     async fn run(
         self,

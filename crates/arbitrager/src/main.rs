@@ -3,17 +3,11 @@ use std::{env, path::Path};
 use sikkara_core::run;
 
 // Internal module for the arbitrager application
-#[allow(unused)]
-mod action;
 mod collectors;
 #[allow(unused)]
 mod config;
 #[allow(unused)]
 mod engine;
-mod event;
-mod models;
-#[allow(unused)]
-mod price_feed;
 #[allow(unused)]
 mod runner;
 #[allow(unused)]

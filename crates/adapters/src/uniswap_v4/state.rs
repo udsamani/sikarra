@@ -64,9 +64,7 @@ where
     /// # Returns
     ///
     /// A new [`UniswapV4StateViewManager`] instance
-    pub fn new(provider: Arc<P>, address: Address) -> Self {
-        Self { provider, address }
-    }
+    pub fn new(provider: Arc<P>, address: Address) -> Self { Self { provider, address } }
 
     /// Creates a stream that watches a specific pool's state changes.
     ///
@@ -117,7 +115,6 @@ where
                             invert,
                         );
                         // Return data and continue the stream
-                        println!("Fetched pool state: {:?}", slot);
                         Some((data, (provider, address, pool_id, timer)))
                     },
                     Err(e) => {

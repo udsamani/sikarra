@@ -3593,7 +3593,9 @@ dependencies = [
 name = "sikkara-arbitrager"
 version = "0.1.0"
 dependencies = [
+ "alloy",
  "async-trait",
+ "fastnum",
  "futures",
  "jiff",
  "rust_decimal",

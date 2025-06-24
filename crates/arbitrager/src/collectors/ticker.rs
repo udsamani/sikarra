@@ -1,8 +1,9 @@
 use sikkara_core::{AppResult, Collector, CollectorStream};
 use tokio_stream::StreamExt;
 
-use crate::{event::InternalEvent, models::PoolSymbol, price_feed::PriceFeed};
+use crate::engine::{InternalEvent, PoolSymbol, PriceFeed};
 
+/// Collector that listens for price feed updates from a price feed client
 #[derive(Debug, Clone)]
 pub struct PriceFeedCollector<P>
 where
@@ -27,9 +28,7 @@ impl<P> Collector<InternalEvent> for PriceFeedCollector<P>
 where
     P: PriceFeed + Send + Sync,
 {
-    fn name(&self) -> &str {
-        &self.name
-    }
+    fn name(&self) -> &str { &self.name }
 
     async fn subscribe_event_stream(&mut self) -> AppResult<CollectorStream<'_, InternalEvent>> {
         let stream = self
@@ -47,6 +46,8 @@ where
     }
 
     async fn unsubscribe_event_stream(&mut self) -> sikkara_core::AppResult<()> {
-        todo!()
+        self.client
+            .unsubscribe_price_feed(self.symbol.clone())
+            .await
     }
 }
