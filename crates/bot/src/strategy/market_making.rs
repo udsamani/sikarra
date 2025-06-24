@@ -150,15 +150,13 @@ impl MarketMakingSimulator {
             MarketCondition::Arbitrage => {
                 if let Some(dex) = dex_price {
                     if dex > cex_price {
-                        // DEX price higher - expect selling pressure
-                        // Tighten ask (more aggressive selling), widen bid (cautious buying)
+                        // Tighten ask
                         ask_spread = self
                             .apply_arbitrage_adjustment(ask_spread, self.arbitrage_tighten_factor);
                         bid_spread = self
                             .apply_arbitrage_adjustment(bid_spread, self.arbitrage_widen_factor);
                     } else {
-                        // DEX price lower - expect buying pressure
-                        // Tighten bid (more aggressive buying), widen ask (cautious selling)
+                        // Tighten bid
                         bid_spread = self
                             .apply_arbitrage_adjustment(bid_spread, self.arbitrage_tighten_factor);
                         ask_spread = self
@@ -178,16 +176,10 @@ impl MarketMakingSimulator {
 
     /// Apply arbitrage adjustment (simplified without intensity)
     fn apply_arbitrage_adjustment(&self, base_spread: u32, adjustment_factor: Decimal) -> u32 {
-        // Convert base_spread to Decimal for precise calculation
         let base_spread_decimal = Decimal::from(base_spread);
-
-        // Apply adjustment factor
         let adjusted_spread_decimal = base_spread_decimal * adjustment_factor;
-
-        // Convert back to u32, with fallback to original value if conversion fails
         let adjusted_spread = adjusted_spread_decimal.to_u32().unwrap_or(base_spread);
-
-        // Ensure reasonable bounds (don't go below 5 bps or above 500 bps)
+        //TODO: fix hard coding
         adjusted_spread.clamp(5, 500)
     }
 
